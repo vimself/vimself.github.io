@@ -1,0 +1,183 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Badge from '../../components/Badge.astro';
+import { allNotes, data, fmtDate } from '../../lib/notes';
+import { slugify } from '../../lib/slug.mjs';
+import { site } from '../../config/site';
+
+export async function getStaticPaths() {
+  const notes = await allNotes();
+  const noteSlugs = new Set(notes.map((n) => data(n).slug));
+  const paths: any[] = [];
+
+  notes.forEach((entry, i) => {
+    paths.push({
+      params: { slug: data(entry).slug },
+      // 按 updated 倒序排列，所以「上一篇」是更新的那篇
+      props: { entry, alias: null, prev: notes[i - 1] ?? null, next: notes[i + 1] ?? null },
+    });
+  });
+
+  /**
+   * 别名跳转页。
+   * aliases 在知识库里是「防重复的主承力构件」，写的是这个概念所有可能的叫法。
+   * 顺手给每个别名生成一个跳转页，等于白捡一套**改名不断链**的保护：
+   * CLAUDE.md 的「合并」流程本来就要求把被删那篇的标题加进保留篇的 aliases，
+   * 那条规则在这里直接变成了外链保护。
+   */
+  const seen = new Set(noteSlugs);
+  for (const entry of notes) {
+    for (const alias of data(entry).aliases) {
+      const s = slugify(alias);
+      if (!s || seen.has(s)) continue;
+      seen.add(s);
+      paths.push({ params: { slug: s }, props: { entry, alias, prev: null, next: null } });
+    }
+  }
+  return paths;
+}
+
+const { entry, alias, prev, next } = Astro.props;
+const d = data(entry);
+const target = new URL(d.url, site.url).href;
+const { Content } = await render(entry);
+---
+{alias ? (
+  <Base title={alias} description={d.lede} canonical={target} noindex>
+    <meta http-equiv="refresh" content={`0; url=${d.url}`} slot="head" />
+    <div class="container anim-view">
+      <div class="empty-state">
+        <p class="empty-state__title">「{alias}」是 <a href={d.url}>{d.name}</a> 的别名</p>
+        <p class="empty-state__hint">正在跳转…</p>
+      </div>
+    </div>
+    <script is:inline set:html={`location.replace(${JSON.stringify(d.url)})`} />
+  </Base>
+) : (
+  <Base title={d.name} description={d.lede} current="home">
+    <div class="container anim-view">
+      <article class="note">
+        <a class="note__back" href="/">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+          返回列表
+        </a>
+
+        <div class="note__meta">
+          <Badge variant="outline" href={`/d/${d.domain}/`}>{d.domain}</Badge>
+          {d.kind && <Badge variant="pill">{d.kind}</Badge>}
+          <time class="note__date" datetime={fmtDate(d.updated)}>{fmtDate(d.updated)}</time>
+        </div>
+
+        <h1 class="note__title">{d.name}</h1>
+        {d.lede && <p class="note-lede">{d.lede}</p>}
+
+        <div class="prose">
+          <Content />
+        </div>
+
+        {d.topics.length > 0 && (
+          <div class="note__topics">
+            {d.topics.map((t: string) => <Badge variant="outline">{t}</Badge>)}
+          </div>
+        )}
+
+        {(prev || next) && (
+          <nav class="note__nav" aria-label="相邻笔记">
+            {prev && (
+              <a class="card note__navcard" href={data(prev).url}>
+                <span class="note__navlabel">上一篇</span>
+                <span class="note__navtitle">{data(prev).name}</span>
+              </a>
+            )}
+            {next && (
+              <a class="card note__navcard note__navcard--right" href={data(next).url}>
+                <span class="note__navlabel">下一篇</span>
+                <span class="note__navtitle">{data(next).name}</span>
+              </a>
+            )}
+          </nav>
+        )}
+
+        {d.backlinks.length > 0 && (
+          <section class="note__back-refs">
+            <span class="eyebrow">被这些笔记引用</span>
+            <div class="note__backgrid">
+              {d.backlinks.map((b) => (
+                <a class="card note__navcard" href={b.url}>
+                  <span class="note__navtitle">{b.name}</span>
+                  {b.lede && <span class="note__navlede">{b.lede}</span>}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+      </article>
+    </div>
+  </Base>
+)}
+
+<style>
+  .note { max-width: var(--measure); padding: 40px 0 0; }
+
+  .note__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font: var(--nav-link);
+    font-family: var(--font-sans);
+    color: var(--muted);
+  }
+  .note__back:hover { color: var(--primary); }
+
+  .note__meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 30px 0 14px; }
+  .note__date { font: var(--code); font-size: 12.5px; color: var(--muted-soft); }
+
+  .note__title {
+    font-family: var(--font-serif-display);
+    font-weight: 400;
+    font-size: clamp(28px, 5.4vw, 40px);
+    line-height: 1.25;
+    letter-spacing: -0.9px;
+    color: var(--ink);
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .note__topics { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 36px; }
+
+  .note__nav {
+    margin-top: 44px;
+    padding-top: 26px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .note__navcard { flex: 1 1 220px; padding: 16px 18px; gap: 6px; }
+  .note__navcard--right { text-align: right; }
+  .note__navlabel { font: var(--caption); color: var(--muted-soft); }
+  .note__navtitle { font: var(--title-sm); font-size: 15px; color: var(--ink); text-wrap: pretty; }
+  .note__navlede {
+    font: var(--body-sm);
+    font-size: 13px;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 反链：设计稿没有这个槽位，但 wiki 少了反链就不成立。
+     复用「上一篇/下一篇」那张卡的全部样式，看起来是原生的。 */
+  .note__back-refs { margin-top: 40px; padding-top: 26px; border-top: 1px solid var(--hairline); }
+  .note__backgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+</style>

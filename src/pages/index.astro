@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import HomeView from '../components/HomeView.astro';
+import { site } from '../config/site';
+import { allNotes, paginate } from '../lib/notes';
+
+const notes = await allNotes();
+const p = paginate(notes, site.perPage, 1);
+---
+<Base current="home">
+  <HomeView notes={p.slice} page={p.page} last={p.last} start={p.start} total={p.total} />
+</Base>

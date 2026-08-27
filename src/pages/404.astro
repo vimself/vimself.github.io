@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="页面不存在" noindex>
+  <div class="container anim-view">
+    <div class="empty-state" style="padding:96px 10px">
+      <p class="empty-state__title">这里没有东西</p>
+      <p class="empty-state__hint">链接可能过期了，或者这篇笔记还没写。</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a class="btn btn--secondary" href="/">回首页</a>
+        <a class="btn btn--text" href="/search/">搜一下</a>
+      </div>
+    </div>
+  </div>
+</Base>

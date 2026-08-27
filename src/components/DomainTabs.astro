@@ -1,0 +1,20 @@
+---
+import CategoryTab from './CategoryTab.astro';
+interface Props { domains: { name: string }[]; current?: string; }
+const { domains, current } = Astro.props;
+---
+<div class="tabs">
+  <CategoryTab href="/d/" active={!current}>全部</CategoryTab>
+  {domains.map((d) => (
+    <CategoryTab href={`/d/${d.name}/`} active={current === d.name}>{d.name}</CategoryTab>
+  ))}
+</div>
+<style>
+  .tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--hairline-soft);
+  }
+</style>

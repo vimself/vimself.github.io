@@ -1,0 +1,84 @@
+---
+import NoteRow from './NoteRow.astro';
+import Pager from './Pager.astro';
+import { site } from '../config/site';
+import { data, fmtDate, type Note } from '../lib/notes';
+
+interface Props { notes: Note[]; page: number; last: number; start: number; total: number; }
+const { notes, page, last, start, total } = Astro.props;
+
+const pageLabel =
+  last > 1 ? `${start + 1}–${start + notes.length} / ${total} 篇` : `${total} 篇`;
+---
+<div class="container anim-view">
+  <section style="padding:44px 0 20px">
+    <p class="hero anim-rise">{site.tagline}</p>
+    <div class="hero-meta anim-rise" style="animation-delay:90ms">
+      <p class="hero-intro">
+        <span class="dot dot--teal"></span>{site.intro}
+      </p>
+      <span class="hero-count">{pageLabel}</span>
+    </div>
+  </section>
+
+  <section>
+    {total === 0 ? (
+      <div class="empty-state">
+        <p class="empty-state__title">还没有笔记</p>
+        <p class="empty-state__hint">
+          在 Obsidian 里写下第一篇，push 到 jory-notes，这里就会自动长出来。
+        </p>
+      </div>
+    ) : (
+      <div class="note-list">
+        {notes.map((n, i) => (
+          <NoteRow
+            url={data(n).url}
+            title={data(n).name}
+            domain={data(n).domain}
+            date={fmtDate(data(n).updated)}
+            delay={i * 26}
+          />
+        ))}
+      </div>
+    )}
+    <Pager page={page} last={last} />
+  </section>
+</div>
+
+<style>
+  .hero {
+    font-family: var(--font-serif-display);
+    font-size: clamp(26px, 4.6vw, 38px);
+    line-height: 1.35;
+    letter-spacing: -0.6px;
+    color: var(--ink);
+    margin: 0;
+    max-width: 640px;
+    text-wrap: pretty;
+  }
+  .hero-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 18px 0 0;
+  }
+  .hero-intro {
+    font: var(--body-sm);
+    color: var(--muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .dot--teal { background: var(--accent-teal); }
+  .hero-count {
+    font: var(--code);
+    font-size: 12px;
+    color: var(--muted-soft);
+    margin-left: auto;
+  }
+</style>

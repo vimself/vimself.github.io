@@ -1,0 +1,63 @@
+name: 构建并部署博客
+
+on:
+  # 博客自己的改动（版式、管道）
+  push:
+    branches: [main]
+  # jory-notes 推送后敲的门铃
+  repository_dispatch:
+    types: [notes-updated]
+  # 手动重建按钮
+  workflow_dispatch:
+  # 兜底：防 PAT 过期或 dispatch 偶发丢失，每周日 20:00 UTC 全量重建一次
+  schedule:
+    - cron: '0 20 * * 0'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # jory-notes 是公开仓库，匿名 clone 即可 —— 这一步不需要任何凭证。
+      # PAT 只用在反方向（notes 通知 blog），权限面小得多。
+      # --depth 1 够用：日期取自 frontmatter，不依赖 git 历史。
+      - name: 拉取知识库
+        run: git clone --depth 1 https://github.com/vimself/jory-notes.git notes
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: 构建
+        run: npm run build
+        env:
+          NOTES_DIR: ./notes
+          # 违反知识库规则时中断构建。临时放行改成 '0'。
+          BLOG_STRICT: '1'
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

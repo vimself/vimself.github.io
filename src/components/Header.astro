@@ -1,0 +1,63 @@
+---
+import { Image } from 'astro:assets';
+import { site } from '../config/site';
+import { avatarAsset, AVATAR_FALLBACK } from '../lib/avatar';
+
+/** 当前高亮的导航项 */
+interface Props { current?: 'home' | 'search' | 'cats' | 'about' }
+const { current } = Astro.props;
+
+const items = [
+  { key: 'home',   label: '首页', href: '/' },
+  { key: 'search', label: '搜索', href: '/search/' },
+  { key: 'cats',   label: '分类', href: '/d/' },
+  { key: 'about',  label: '关于', href: '/about/' },
+] as const;
+---
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="/">
+      {avatarAsset ? (
+        <Image
+          class="brand__avatar"
+          src={avatarAsset}
+          alt={site.author}
+          width={30}
+          height={30}
+          densities={[1, 2]}
+          loading="eager"
+        />
+      ) : (
+        <img class="brand__avatar" src={AVATAR_FALLBACK} alt={site.author} width="30" height="30" />
+      )}
+      <span class="brand__name">{site.title}</span>
+    </a>
+
+    <nav class="site-nav" aria-label="主导航">
+      {items.map((i) => (
+        <a class="nav-link" href={i.href} aria-current={current === i.key ? 'page' : undefined}>
+          {i.label}
+        </a>
+      ))}
+
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="切换日夜主题">
+        <span class="theme-toggle__icon theme-toggle__sun">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+        </span>
+        <span class="theme-toggle__icon theme-toggle__moon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+        </span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  btn?.addEventListener('click', () => {
+    const now = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const next = now === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('vimself.theme', next); } catch {}
+  });
+</script>

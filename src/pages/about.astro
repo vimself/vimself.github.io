@@ -1,0 +1,99 @@
+---
+import Base from '../layouts/Base.astro';
+import { Image } from 'astro:assets';
+import { site } from '../config/site';
+import { avatarAsset, AVATAR_FALLBACK } from '../lib/avatar';
+---
+<Base title="关于" description={site.about.paragraphs[0]} current="about">
+  <div class="container anim-view">
+    <section class="head">
+      {avatarAsset ? (
+        <Image class="avatar" src={avatarAsset} alt={site.author} width={88} height={88} densities={[1, 2]} />
+      ) : (
+        <img class="avatar" src={AVATAR_FALLBACK} alt={site.author} width="88" height="88" />
+      )}
+      <div class="head__text">
+        <h1 class="page-title">{site.author}</h1>
+        <span class="head__role">{site.about.role}</span>
+      </div>
+    </section>
+
+    <section class="bio">
+      {site.about.paragraphs.map((p) => <p class="bio__p">{p}</p>)}
+    </section>
+
+    <section class="tl">
+      <span class="eyebrow">时间线</span>
+      <div class="tl__list">
+        {site.about.timeline.map((e) => (
+          <div class="tl__item">
+            <span class="tl__dot"></span>
+            <span class="tl__year">{e.year}</span>
+            <span class="tl__text">{e.text}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="cta-wrap">
+      <div class="card cta">
+        <div class="cta__text">
+          <span class="cta__title">{site.about.cta.title}</span>
+          <span class="cta__sub">{site.about.cta.subtitle}</span>
+        </div>
+        <a class="cta__btn" href={site.github} target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+          {site.about.cta.label}
+        </a>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .head { padding: 56px 0 0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .avatar {
+    width: 88px; height: 88px; border-radius: 50%;
+    object-fit: cover; display: block; border: 1px solid var(--hairline);
+  }
+  .head__text { display: flex; flex-direction: column; gap: 6px; }
+  .head__role { font: var(--body-sm); color: var(--muted); }
+
+  .bio { padding: 34px 0 0; max-width: 620px; }
+  .bio__p {
+    font: var(--body-md); font-size: 17px; line-height: 1.95;
+    color: var(--body); margin: 0 0 18px; text-wrap: pretty;
+  }
+  .bio__p:last-child { margin-bottom: 0; }
+
+  .tl { padding: 44px 0 0; max-width: 620px; }
+  .tl__list {
+    margin-top: 18px;
+    border-left: 1px solid var(--hairline);
+    display: flex; flex-direction: column; gap: 26px; padding: 4px 0;
+  }
+  .tl__item { display: flex; gap: 18px; padding-left: 20px; position: relative; flex-wrap: wrap; }
+  .tl__dot {
+    position: absolute; left: -4px; top: 9px;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--primary);
+  }
+  .tl__year { font: var(--code); font-size: 13px; color: var(--ink); flex: 0 0 62px; padding-top: 2px; }
+  .tl__text {
+    font: var(--body-md); font-size: 16px; line-height: 1.8;
+    color: var(--body); flex: 1 1 240px; min-width: 0; text-wrap: pretty;
+  }
+
+  .cta-wrap { padding: 44px 0 0; max-width: 620px; }
+  .cta { flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; padding: 24px; }
+  .cta:hover { box-shadow: none; }
+  .cta__text { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; }
+  .cta__title { font: var(--title-sm); color: var(--ink); }
+  .cta__sub { font: var(--body-sm); color: var(--muted); }
+  .cta__btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 0 18px; border-radius: var(--rounded-md);
+    background: var(--canvas); border: 1px solid var(--hairline);
+    color: var(--ink); font: var(--button); font-family: var(--font-sans); text-decoration: none;
+  }
+  .cta__btn:hover { border-color: var(--primary); color: var(--primary); }
+</style>

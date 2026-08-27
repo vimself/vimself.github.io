@@ -1,0 +1,10 @@
+---
+import { site } from '../config/site';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <span class="site-footer__copy">© {year} {site.title} · {site.author}</span>
+    <span class="site-footer__built">Built &amp; hosted on GitHub Pages</span>
+  </div>
+</footer>

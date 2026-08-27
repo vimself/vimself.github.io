@@ -1,0 +1,22 @@
+---
+import Base from '../../layouts/Base.astro';
+import HomeView from '../../components/HomeView.astro';
+import { site } from '../../config/site';
+import { allNotes, paginate } from '../../lib/notes';
+
+export async function getStaticPaths() {
+  const notes = await allNotes();
+  const last = Math.max(1, Math.ceil(notes.length / site.perPage));
+  // 第 1 页是 /，这里只生成 2..last
+  return Array.from({ length: Math.max(0, last - 1) }, (_, i) => ({
+    params: { page: String(i + 2) },
+  }));
+}
+
+const page = Number(Astro.params.page);
+const notes = await allNotes();
+const p = paginate(notes, site.perPage, page);
+---
+<Base title={`第 ${p.page} 页`} current="home">
+  <HomeView notes={p.slice} page={p.page} last={p.last} start={p.start} total={p.total} />
+</Base>

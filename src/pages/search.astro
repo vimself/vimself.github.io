@@ -1,0 +1,193 @@
+---
+import Base from '../layouts/Base.astro';
+import { allNotes, data, fmtDate } from '../lib/notes';
+
+const notes = await allNotes();
+const latest = notes.slice(0, 5);
+---
+<Base title="搜索" current="search">
+  <div class="container anim-view">
+    <section style="padding:52px 0 0">
+      <h1 class="page-title">搜索</h1>
+      <p class="sub">在 {notes.length} 篇笔记的标题、别名与领域里找</p>
+    </section>
+
+    <section class="box anim-rise" style="animation-delay:60ms">
+      <div class="field" id="field">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted-soft)" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <input id="q" type="search" placeholder="输入关键词…" autocomplete="off" aria-label="搜索笔记" />
+        <button type="button" id="clear" class="clear" aria-label="清空" hidden>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- 空查询：最新几篇 -->
+    <section id="idle" style="padding:30px 0 0">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span class="eyebrow" style="padding-bottom:12px">最新几篇</span>
+        {latest.map((n) => (
+          <a class="note-row" href={data(n).url}>
+            <span class="note-row__title" style="font-size:15px">{data(n).name}</span>
+            <time class="note-row__date">{fmtDate(data(n).updated)}</time>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- 有结果 -->
+    <section id="hits" style="padding:30px 0 0" hidden>
+      <div style="display:flex;align-items:baseline;gap:10px;padding:0 2px 10px">
+        <span class="eyebrow" id="hit-label"></span>
+      </div>
+      <div class="note-list" id="hit-list"></div>
+    </section>
+
+    <!-- 无结果 -->
+    <section id="none" class="empty-state anim-fade" hidden>
+      <p class="empty-state__title">没有匹配「<span id="none-q"></span>」的笔记</p>
+      <p class="empty-state__hint">搜索匹配标题、别名与领域，试试更短的词</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button type="button" class="btn btn--secondary" id="reset">清空</button>
+        <a class="btn btn--text" href="/d/">看分类</a>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .sub { font: var(--body-sm); color: var(--muted); margin: 10px 0 0; }
+  .box { padding: 26px 0 0; }
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1.5px solid var(--hairline);
+    padding: 0 2px 12px;
+    transition: border-color 200ms ease;
+  }
+  .field:focus-within { border-bottom-color: var(--primary); }
+  .field input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-serif-display);
+    font-size: clamp(22px, 3.6vw, 30px);
+    letter-spacing: -0.5px;
+    color: var(--ink);
+    padding: 0;
+    appearance: none;
+  }
+  .field input::-webkit-search-cancel-button { display: none; }
+  .clear {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: var(--surface-card);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .clear:hover { color: var(--ink); }
+  .hit-sub {
+    font: var(--caption);
+    color: var(--muted-soft);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .hit-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); display: inline-block; }
+</style>
+
+<script>
+  const q = document.getElementById('q') as HTMLInputElement;
+  const clearBtn = document.getElementById('clear')!;
+  const resetBtn = document.getElementById('reset')!;
+  const idle = document.getElementById('idle')!;
+  const hits = document.getElementById('hits')!;
+  const none = document.getElementById('none')!;
+  const hitList = document.getElementById('hit-list')!;
+  const hitLabel = document.getElementById('hit-label')!;
+  const noneQ = document.getElementById('none-q')!;
+
+  type Row = { t: string; u: string; c: string; k: string | null; a: string[]; g: string[]; l: string; d: string };
+  let index: Row[] | null = null;
+
+  const load = async () => {
+    if (index) return index;
+    index = await (await fetch('/search-index.json')).json();
+    return index!;
+  };
+
+  const esc = (s: string) =>
+    s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  function search(rows: Row[], raw: string) {
+    const k = raw.trim().toLowerCase();
+    const out: { row: Row; where: string }[] = [];
+    for (const row of rows) {
+      const has = (s: string) => s.toLowerCase().includes(k);
+      let where = '';
+      if (has(row.t)) where = '标题';
+      else if (row.a.some(has)) where = '别名';
+      else if (has(row.c)) where = '领域';
+      else if (row.g.some(has)) where = '技术';
+      else if (row.k && has(row.k)) where = '类型';
+      else if (has(row.l)) where = '结论';
+      if (where) out.push({ row, where });
+    }
+    return out;
+  }
+
+  function render(raw: string, found: { row: Row; where: string }[]) {
+    if (!raw.trim()) {
+      idle.hidden = false; hits.hidden = true; none.hidden = true;
+      return;
+    }
+    idle.hidden = true;
+    if (found.length === 0) {
+      hits.hidden = true; none.hidden = false;
+      noneQ.textContent = raw;
+      return;
+    }
+    none.hidden = true; hits.hidden = false;
+    hitLabel.textContent = `${found.length} 篇匹配`;
+    hitList.innerHTML = found
+      .map(({ row, where }, i) => `
+        <a class="note-row anim-row" href="${esc(row.u)}" style="animation-delay:${i * 40}ms;flex-direction:column;align-items:flex-start;gap:6px">
+          <span style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;width:100%">
+            <span class="note-row__title" style="font-size:16px">${esc(row.t)}</span>
+            <time class="note-row__date">${esc(row.d)}</time>
+          </span>
+          <span class="hit-sub"><span class="hit-dot"></span>${esc(row.c)} · 命中 ${esc(where)}</span>
+        </a>`)
+      .join('');
+  }
+
+  let timer: number;
+  const run = async () => {
+    const raw = q.value;
+    clearBtn.hidden = !raw;
+    if (!raw.trim()) return render(raw, []);
+    render(raw, search(await load(), raw));
+  };
+
+  q.addEventListener('input', () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(run, 80);
+  });
+  q.addEventListener('focus', () => { void load(); });
+
+  const reset = () => { q.value = ''; clearBtn.hidden = true; q.focus(); void run(); };
+  clearBtn.addEventListener('click', reset);
+  resetBtn.addEventListener('click', reset);
+
+  // 支持 /search/?q=xxx 直接带词进来
+  const initial = new URLSearchParams(location.search).get('q');
+  if (initial) { q.value = initial; void run(); } else { q.focus(); }
+</script>

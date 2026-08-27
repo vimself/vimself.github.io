@@ -1,0 +1,232 @@
+/* ─────────────────────────────────────────────────────────────
+   正文排版 (.prose)
+
+   设计稿的文章页只画了四种块：段落、H2、引用、代码。真实笔记里还有
+   H3、有序/无序列表、表格（速查类笔记基本就是表格）、图片、行内代码、
+   行内强调、以及双链。这些没有画，但不能不渲染。
+
+   做法：设计画过的四种 **逐值照抄**；没画过的，从同一套令牌和同样的
+   节奏推导出来 —— 衬线标题走负字距、正文 17px/1.95、卡片 12px 圆角、
+   层级靠米白与发丝线而不是阴影。目标是看起来像原设计自带的，而不是补丁。
+   ───────────────────────────────────────────────────────────── */
+
+.prose {
+  font: var(--body-md);
+  font-size: 17px;
+  line-height: 1.95;
+  color: var(--body);
+  text-wrap: pretty;
+}
+
+/* ── 设计稿原值：段落 ── */
+.prose p { margin: 0 0 22px; }
+
+/* ── 设计稿原值：H2 ── */
+.prose h2 {
+  font-family: var(--font-serif-display);
+  font-weight: 400;
+  font-size: 23px;
+  letter-spacing: -0.4px;
+  color: var(--ink);
+  margin: 38px 0 14px;
+}
+
+/* ── 推导：H3 / H4，沿 H2 的衬线 + 负字距等比往下收 ── */
+.prose h3 {
+  font-family: var(--font-serif-display);
+  font-weight: 400;
+  font-size: 19.5px;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+  margin: 30px 0 12px;
+}
+.prose h4 {
+  font: var(--title-sm);
+  color: var(--ink);
+  margin: 26px 0 10px;
+}
+
+/* 标题锚点：hover 时才浮出一个 #，不打扰阅读 */
+.prose h2, .prose h3 { position: relative; scroll-margin-top: 76px; }
+.prose .heading-anchor {
+  position: absolute;
+  left: -0.85em;
+  opacity: 0;
+  color: var(--muted-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  text-decoration: none;
+  transition: opacity 150ms ease;
+}
+.prose h2:hover .heading-anchor,
+.prose h3:hover .heading-anchor,
+.prose .heading-anchor:focus-visible { opacity: 1; }
+
+/* ── 设计稿原值：引用块 ── */
+.prose blockquote {
+  margin: 0 0 24px;
+  padding: 2px 0 2px 20px;
+  border-left: 2px solid var(--primary);
+  font-family: var(--font-serif-display);
+  font-size: 19px;
+  line-height: 1.75;
+  color: var(--body-strong);
+}
+.prose blockquote p { margin: 0 0 10px; font: inherit; }
+.prose blockquote p:last-child { margin-bottom: 0; }
+
+/* ── 设计稿原值：代码块（底色换成语义令牌，见 tokens.css 的说明） ── */
+.prose pre {
+  margin: 0 0 26px;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--rounded-lg);
+  padding: 20px 22px;
+  font: var(--code);
+  font-size: 13px;
+  line-height: 1.75;
+  overflow-x: auto;
+}
+.prose pre code {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+/* Shiki 会往 pre 上写自己的 background，覆盖掉，保持设计的表面色 */
+.prose pre.astro-code { background: var(--code-bg) !important; }
+
+/* ── 推导：行内代码。走浅米卡片面 + 发丝线，和深色代码块区分开 ── */
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-xs);
+  padding: 1px 6px;
+  color: var(--body-strong);
+  word-break: break-word;
+}
+
+/* ── 推导：列表。缩进用 em 跟随字号，标记点用弱化色 ── */
+.prose ul, .prose ol {
+  margin: 0 0 22px;
+  padding-left: 1.35em;
+}
+.prose li { margin-bottom: 8px; }
+.prose li::marker { color: var(--muted-soft); }
+.prose li > ul, .prose li > ol { margin: 8px 0 0; }
+.prose li > p { margin: 0 0 8px; }
+
+/* 任务列表（Obsidian 的 - [ ] 语法） */
+.prose li:has(> input[type='checkbox']) { list-style: none; margin-left: -1.35em; }
+.prose input[type='checkbox'] { margin-right: 8px; accent-color: var(--primary); }
+
+/* ── 推导：表格。速查类笔记的主力，必须能横向滚动而不撑破页面 ── */
+.prose .table-scroll {
+  overflow-x: auto;
+  margin: 0 0 26px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--rounded-lg);
+}
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  font: var(--body-sm);
+  font-size: 14.5px;
+}
+.prose thead { background: var(--surface-soft); }
+.prose th {
+  font: var(--caption);
+  font-size: 13px;
+  color: var(--ink);
+  text-align: left;
+  padding: 11px 14px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--hairline);
+}
+.prose td {
+  padding: 10px 14px;
+  color: var(--body);
+  border-bottom: 1px solid var(--hairline-soft);
+  vertical-align: top;
+}
+.prose tbody tr:last-child td { border-bottom: none; }
+.prose td code { white-space: nowrap; }
+
+/* ── 推导：图片。用内容卡的 12px 圆角 ── */
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--rounded-lg);
+  margin: 0 0 26px;
+}
+.prose figure { margin: 0 0 26px; }
+.prose figcaption {
+  font: var(--caption);
+  color: var(--muted-soft);
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* 附件缺失时的醒目占位 —— 绝不静默出一张坏图 */
+.prose .img-missing {
+  display: block;
+  padding: 18px 20px;
+  border: 1px dashed var(--error);
+  border-radius: var(--rounded-lg);
+  color: var(--error);
+  font: var(--body-sm);
+  margin: 0 0 26px;
+}
+
+/* ── 推导：分隔线与强调 ── */
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--hairline);
+  margin: 34px 0;
+}
+.prose strong { font-weight: 600; color: var(--body-strong); }
+.prose em { font-style: italic; }
+.prose del { color: var(--muted-soft); }
+
+/* ── 行内链接 ── */
+.prose a {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--link) 32%, transparent);
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.prose a:hover {
+  color: var(--link-hover);
+  border-bottom-color: var(--link-hover);
+}
+
+/* ── 双链 ──
+   已解析的双链就是普通行内链接，不额外加装饰记号：设计系统对主色的要求是
+   「仅用于主 CTA、行内链接与整面强调卡，避免到处点缀」，而一段话里往往有好几个双链，
+   加圆点会让正文变得很吵。珊瑚色 + 下划线本身就够把链接区分出来了。 */
+
+/* 悬空双链 —— 知识库里这是「还没写」的有意标记，不是坏链接。
+   渲染成不可点击的虚线文本，读者一眼看出是待写条目。 */
+.prose .wl-todo {
+  color: var(--muted-soft);
+  border-bottom: 1px dashed var(--muted-soft);
+  cursor: help;
+}
+
+/* ── 一句话结论（导语）──
+   设计稿把它画成正文之上的一段大字，不是普通引用块，所以单独成类。 */
+.note-lede {
+  font: var(--body-md);
+  font-size: 18px;
+  line-height: 1.85;
+  color: var(--muted);
+  margin: 20px 0 36px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--hairline-soft);
+  text-wrap: pretty;
+}

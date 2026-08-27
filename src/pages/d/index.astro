@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import DomainTabs from '../../components/DomainTabs.astro';
+import { allNotes, data, domainsOf, todoOf } from '../../lib/notes';
+
+const notes = await allNotes();
+const domains = domainsOf(notes);
+const todo = todoOf(notes).slice(0, 8);
+---
+<Base title="分类" current="cats">
+  <div class="container anim-view">
+    <section style="padding:52px 0 22px"><h1 class="page-title">分类</h1></section>
+    <DomainTabs domains={domains} />
+
+    <section class="grid">
+      {domains.map((d, i) => (
+        <a class="card anim-rise" href={`/d/${d.name}/`} style={`animation-delay:${i * 60}ms`}>
+          <div class="card__head">
+            <span class="card__name">{d.name}</span>
+            <span class="card__count">{d.count} 篇</span>
+          </div>
+          <div class="card__recent">
+            {d.items.slice(0, 3).map((n) => <span class="card__line">{data(n).name}</span>)}
+          </div>
+        </a>
+      ))}
+
+      {/*
+        设计稿里这张珊瑚卡写的是「还在写 —— 分类会随内容长出来，不预设」。
+        它本来就是一张「接下来会有什么」的占位卡，正好可以喂真实数据：
+        知识库里的悬空双链就是明确的待写清单（CLAUDE.md：不建空的占位笔记，
+        留一个悬空双链当待办即可）。有待写条目就显示它们，没有就回到原文案。
+      */}
+      <div class="card card--coral anim-rise" style="animation-delay:220ms">
+        <span class="card__name">还在写</span>
+        {todo.length > 0 ? (
+          <>
+            <span class="card__note">这些概念已经被别的笔记引用，但还没写：</span>
+            <div class="card__recent">
+              {todo.map((t) => (
+                <span class="card__line">{t.name}<span class="card__ref"> ←{t.count}</span></span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <span class="card__note">分类会随内容长出来，不预设。</span>
+        )}
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+    padding: 26px 0 0;
+  }
+  .card__head { display: flex; align-items: baseline; gap: 8px; }
+  .card__name {
+    font-family: var(--font-serif-display);
+    font-size: 22px;
+    letter-spacing: -0.3px;
+    color: var(--ink);
+  }
+  .card__count { font: var(--code); font-size: 12px; color: var(--muted-soft); margin-left: auto; }
+  .card__recent { display: flex; flex-direction: column; gap: 7px; }
+  .card__line {
+    font: var(--body-sm);
+    font-size: 13.5px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card--coral { background: var(--primary); color: var(--on-primary); gap: 10px; }
+  .card--coral:hover { box-shadow: none; }
+  .card--coral .card__name { color: var(--on-primary); }
+  .card--coral .card__line { color: rgba(255, 255, 255, 0.92); }
+  .card__note { font: var(--body-sm); font-size: 13.5px; opacity: 0.9; line-height: 1.7; }
+  .card__ref { font: var(--code); font-size: 11px; opacity: 0.7; }
+</style>

@@ -1,0 +1,6 @@
+---
+/** 设计系统 CategoryTab。静态站里是链接而非按钮，选中态交给 aria-current。 */
+interface Props { href: string; active?: boolean; }
+const { href, active = false } = Astro.props;
+---
+<a class="cat-tab" href={href} aria-current={active ? 'page' : undefined}><slot /></a>

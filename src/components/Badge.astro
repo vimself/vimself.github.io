@@ -1,0 +1,12 @@
+---
+/** 设计系统 Badge —— 逐值移植自 _ds_bundle.js。博客页用的是 outline 变体。 */
+interface Props {
+  variant?: 'pill' | 'outline' | 'coral' | 'amber';
+  href?: string;
+  class?: string;
+}
+const { variant = 'outline', href, class: cls = '' } = Astro.props;
+const klass = `badge badge--${variant} ${cls}`.trim();
+const Tag = href ? 'a' : 'span';
+---
+<Tag class={klass} href={href}><slot /></Tag>

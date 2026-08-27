@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.log
+
+# 知识库：本地是指向 ../jory-notes 的符号链接，CI 里是 clone 出来的 —— 都不入库
+notes
+
+# 附件从 vault 镜像过来，是产物不是源文件
+public/attachments/

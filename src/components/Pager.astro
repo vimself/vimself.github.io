@@ -1,0 +1,24 @@
+---
+/** 分页。设计稿是客户端翻页；静态站给每页真实 URL，可分享、可收录。 */
+interface Props { page: number; last: number; base?: string; }
+const { page, last, base = '' } = Astro.props;
+const href = (n: number) => (n === 1 ? `${base}/` : `${base}/page/${n}/`);
+const nums = Array.from({ length: last }, (_, i) => i + 1);
+---
+{last > 1 && (
+  <nav class="pager anim-fade" aria-label="分页">
+    <a class="pager__step" href={href(page - 1)} aria-disabled={page <= 1 ? 'true' : undefined} rel="prev">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+      上一页
+    </a>
+    <div class="pager__nums">
+      {nums.map((n) => (
+        <a class="pager__num" href={href(n)} aria-current={n === page ? 'page' : undefined}>{n}</a>
+      ))}
+    </div>
+    <a class="pager__step" href={href(page + 1)} aria-disabled={page >= last ? 'true' : undefined} rel="next">
+      下一页
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+    </a>
+  </nav>
+)}

@@ -1,0 +1,22 @@
+---
+import Badge from './Badge.astro';
+import { site } from '../config/site';
+
+/** 首页 / 领域页 / 搜索页共用的笔记行。设计稿：标题 · 领域徽标 · 日期。 */
+interface Props {
+  url: string;
+  title: string;
+  domain?: string;
+  date?: string;
+  showTag?: boolean;
+  delay?: number;
+}
+const { url, title, domain, date, showTag = site.showTagInList, delay = 0 } = Astro.props;
+---
+<a class="note-row anim-row" href={url} style={`animation-delay:${delay}ms`}>
+  <span class="note-row__title">{title}</span>
+  <span class="note-row__meta">
+    {showTag && domain && <Badge variant="outline">{domain}</Badge>}
+    {date && <time class="note-row__date" datetime={date}>{date}</time>}
+  </span>
+</a>

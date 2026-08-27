@@ -1,0 +1,37 @@
+---
+import Base from '../../layouts/Base.astro';
+import DomainTabs from '../../components/DomainTabs.astro';
+import NoteRow from '../../components/NoteRow.astro';
+import { allNotes, data, domainsOf, fmtDate } from '../../lib/notes';
+
+export async function getStaticPaths() {
+  const notes = await allNotes();
+  return domainsOf(notes).map((d) => ({
+    params: { domain: d.name },
+    props: { items: d.items },
+  }));
+}
+
+const { domain } = Astro.params;
+const { items } = Astro.props;
+const domains = domainsOf(await allNotes());
+---
+<Base title={domain} description={`${domain} 领域下的 ${items.length} 篇笔记`} current="cats">
+  <div class="container anim-view">
+    <section style="padding:52px 0 22px"><h1 class="page-title">{domain}</h1></section>
+    <DomainTabs domains={domains} current={domain} />
+    <section style="padding:22px 0 0">
+      <div class="note-list">
+        {items.map((n, i) => (
+          <NoteRow
+            url={data(n).url}
+            title={data(n).name}
+            date={fmtDate(data(n).updated)}
+            showTag={false}
+            delay={i * 26}
+          />
+        ))}
+      </div>
+    </section>
+  </div>
+</Base>

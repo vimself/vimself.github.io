@@ -1,0 +1,96 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getImage } from 'astro:assets';
+import { site } from '../config/site';
+import { avatarAsset } from '../lib/avatar';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  current?: 'home' | 'search' | 'cats' | 'about';
+  /** 笔记页把 canonical 交给自己，别名跳转页需要指到正文 */
+  canonical?: string;
+  noindex?: boolean;
+}
+const { title, description, current, canonical, noindex = false } = Astro.props;
+
+const pageTitle = title ? `${title} · ${site.title}` : `${site.title} · ${site.author}`;
+const desc = description || site.description;
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).href;
+
+// 从同一张头像派生出小图标与分享图，各自只生成需要的尺寸
+const favicon = avatarAsset
+  ? await getImage({ src: avatarAsset, width: 64, height: 64, format: 'png' })
+  : null;
+const touchIcon = avatarAsset
+  ? await getImage({ src: avatarAsset, width: 180, height: 180, format: 'png' })
+  : null;
+// 分享图用 jpeg：源图是插画，512px 的 PNG 会比 JPEG 大好几倍，
+// 而社交平台的抓取器对 WebP 支持又参差不齐。
+const ogImage = avatarAsset
+  ? await getImage({ src: avatarAsset, width: 512, height: 512, format: 'jpeg', quality: 82 })
+  : null;
+---
+<!doctype html>
+<!-- lang 必须准确：中文分词、断行规则、以及以后要接全文搜索都靠它 -->
+<html lang={site.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!--
+      主题必须在首次绘制前定好，否则深色模式用户每次跳页都会闪一下白。
+      设计稿把上色放在 componentDidMount 里，那是画布环境；静态站要提前到这里。
+    -->
+    <script is:inline>
+      try {
+        var t = localStorage.getItem('vimself.theme');
+        if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={title ?? site.title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta name="twitter:card" content="summary" />
+    {ogImage && <meta property="og:image" content={new URL(ogImage.src, site.url).href} />}
+
+    {favicon ? (
+      <link rel="icon" href={favicon.src} type="image/png" />
+    ) : (
+      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    )}
+    {touchIcon && <link rel="apple-touch-icon" href={touchIcon.src} />}
+    <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+
+    <!--
+      设计系统用 @import 引 Google Fonts，那样是渲染阻塞的。改成 link + preconnect。
+      display=swap 保证字体拿不到时立刻用回退栈渲染 —— 网络不通时页面照样可读，
+      回退栈里的 PingFang SC / Songti SC 本身就是像样的中文字体。
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <Header current={current} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

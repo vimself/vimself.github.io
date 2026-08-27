@@ -1,0 +1,60 @@
+/* ─────────────────────────────────────────────────────────────
+   设计系统组件 — 逐值移植自 _ds_bundle.js
+   （只移植博客页真正用到的三个：Badge / Button / CategoryTab。
+     TopNav、Footer、ClauseCard、DocCard 等属于「中煤智库」那套产品界面，
+     博客页没有引用，不搬。）
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--rounded-pill);
+  white-space: nowrap;
+}
+.badge--pill    { background: var(--surface-card); color: var(--ink); font: var(--caption); }
+.badge--outline { background: transparent; color: var(--muted); font: var(--caption); border: 1px solid var(--hairline); }
+.badge--coral   { background: var(--primary); color: var(--on-primary); font: var(--caption-uppercase); letter-spacing: var(--tracking-caption-upper); }
+.badge--amber   { background: var(--accent-amber); color: #fff; font: var(--caption-uppercase); letter-spacing: var(--tracking-caption-upper); }
+
+a.badge:hover { border-color: var(--muted-soft); color: var(--ink); }
+
+/* ── Button ── */
+.btn {
+  font: var(--button);
+  font-family: var(--font-sans);
+  height: 40px;
+  padding: 0 20px;
+  border-radius: var(--rounded-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn--primary   { background: var(--primary); color: var(--on-primary); }
+.btn--primary:active { background: var(--primary-active); }
+.btn--secondary { background: var(--canvas); color: var(--ink); border: 1px solid var(--hairline); }
+.btn--text      { background: transparent; color: var(--ink); padding: 0 8px; }
+.btn--secondary:hover, .btn--text:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ── CategoryTab ── */
+.cat-tab {
+  font: var(--nav-link);
+  font-family: var(--font-sans);
+  padding: 8px 14px;
+  border-radius: var(--rounded-md);
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.cat-tab:hover { color: var(--ink); }
+.cat-tab[aria-current='page'] { background: var(--surface-card); color: var(--ink); }
