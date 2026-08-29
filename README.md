@@ -221,8 +221,11 @@ Astro 7 默认换成了 Rust 写的处理器，它不跑 remark/rehype 插件 �
 
 </details>
 
-## 内容在另一个仓库
+## 授权与内容
 
-站点代码在这里，笔记正文在 [vimself/jory-notes](https://github.com/vimself/jory-notes)。
+管道代码采用 [MIT](LICENSE) —— 随便拿去用、改、商用，照抄整套也没问题，保留版权声明即可。
+
+笔记正文不在这里，在 [vimself/jory-notes](https://github.com/vimself/jory-notes)，
+按 [CC BY 4.0](https://github.com/vimself/jory-notes/blob/main/LICENSE) 单独授权（转载注明出处）。
 那边的 README 和 `CLAUDE.md` 也是公开的 —— 收录判据、目录结构、查重与体检流程都写在里面，
 和这条管道是配套的一半。
