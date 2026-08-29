@@ -229,3 +229,12 @@ Astro 7 默认换成了 Rust 写的处理器，它不跑 remark/rehype 插件 �
 按 [CC BY 4.0](https://github.com/vimself/jory-notes/blob/main/LICENSE) 单独授权（转载注明出处）。
 那边的 README 和 `CLAUDE.md` 也是公开的 —— 收录判据、目录结构、查重与体检流程都写在里面，
 和这条管道是配套的一半。
+
+## 授权
+
+笔记内容采用 [CC BY 4.0](LICENSE) —— 转载、改写、商用都可以，注明出处即可。
+
+例外：`.claude/skills/humanizer-zh/` 是 vendored 进来的第三方 skill（[op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh)），
+保留它自己的 MIT 协议，见该目录下的 `LICENSE`。
+
+驱动这个库的博客管道在 [vimself/vimself.github.io](https://github.com/vimself/vimself.github.io)，MIT。
