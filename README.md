@@ -1,8 +1,8 @@
 # vimself.github.io
 
 **在 Obsidian 里写完笔记 `git push`，博客自己长出来。** 这个仓库是那套自动化管道的全部代码 ——
-一个 Astro 站点，内容一个字都不在这里，它在 [vimself/jory-notes](https://github.com/vimself/jory-notes)
-那个 Obsidian vault 里，每次构建现拉现渲染。
+一个 Astro 站点，内容一个字都不在这里，内容全部依据另一个仓库 [vimself/jory-notes](https://github.com/vimself/jory-notes)
+，即 Obsidian vault 里，每次构建现拉现渲染。
 
 [![部署](https://github.com/vimself/vimself.github.io/actions/workflows/deploy.yml/badge.svg)](https://github.com/vimself/vimself.github.io/actions/workflows/deploy.yml)
 [![站点](https://img.shields.io/badge/线上-vimself.github.io-1f2328)](https://vimself.github.io)
@@ -75,7 +75,7 @@ URL 遵守同一条，把笔记挪到别的领域，外链不会断。
 而「合并笔记时把被删那篇的标题加进 `aliases`」本来就是知识库的规矩，
 那条规则在这里直接变成了外链保护。
 
-## 自己搭一套
+## 搭一套属于自己的自动化 Blog
 
 前置：Node 22、一个 GitHub 账号、一个用 Obsidian（或任何纯 Markdown 编辑器）写的笔记目录。
 
