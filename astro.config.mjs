@@ -7,6 +7,7 @@ import path from 'node:path';
 
 import remarkWikilink from './src/plugins/remark-wikilink.mjs';
 import rehypePolish from './src/plugins/rehype-polish.mjs';
+import { codeThemeLight, codeThemeDark } from './src/lib/code-theme.mjs';
 
 const NOTES_DIR = path.resolve(process.env.NOTES_DIR || './notes');
 
@@ -66,9 +67,14 @@ export default defineConfig({
       smartypants: false,
     }),
     shikiConfig: {
-      // 暖调深色主题，贴合米白 + 珊瑚这套色系；
-      // 底色由 prose.css 用 --code-bg 覆盖，保证深浅两种模式都对。
-      theme: 'vitesse-dark',
+      /*
+       * 双主题。亮色照着设计图配（见 src/lib/code-theme.mjs），深色是同一份
+       * 作用域表换一套配色。Shiki 把深色值写成行内变量 --shiki-dark，
+       * 由 prose.css 在 [data-theme='dark'] 下整体切过去 ——
+       * 纯 CSS，跟首屏那段主题脚本一样不产生闪烁。
+       * 两个主题自带的背景都不用，底色统一由 --code-bg 覆盖。
+       */
+      themes: { light: codeThemeLight, dark: codeThemeDark },
       wrap: false,
     },
   },

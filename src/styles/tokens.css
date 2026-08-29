@@ -42,10 +42,16 @@
      设计系统只定义了亮色模式（见 readme.md「Known Gaps: 深色模式未定义」），
      而博客页的 DARK 映射没有覆盖 --surface-dark。直接用 --surface-dark 当代码块底色，
      在深色模式下会和 --canvas 撞成同一个值 (#181715)，代码块整个消失。
-     所以这里抽出独立的语义令牌，两种模式各自定义。 */
-  --code-bg: var(--surface-dark);
-  --code-fg: var(--on-dark);
-  --code-border: transparent;
+     所以这里抽出独立的语义令牌，两种模式各自定义。
+
+     亮色模式下代码块是近白的一块，比米白画布再亮一档，靠一条发丝线定住边缘。
+     底色不取纯白：画布是暖米白，纯白压上去会显出一块发冷的斑。 */
+  --code-bg: #fffdf9;
+  --code-fg: var(--body);
+  --code-border: var(--hairline);
+  --code-label: var(--muted-soft);
+  --code-btn: var(--muted);
+  --code-btn-bg: var(--surface-soft);
 
   /* ── 行内链接 ──
      设计里 --link 直接等于 --primary。珊瑚 #cc785c 落在米白画布上约 3.4:1，
@@ -136,6 +142,9 @@
   --code-bg: #0f0e0d;
   --code-fg: #e9e5de;
   --code-border: #2b2724;
+  --code-label: #85827b;
+  --code-btn: #a09d96;
+  --code-btn-bg: #1f1e1b;
 
   /* 珊瑚在深色画布上约 5:1，够用，回到原值 */
   --link: #cc785c;

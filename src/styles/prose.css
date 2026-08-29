@@ -75,28 +75,107 @@
 .prose blockquote p { margin: 0 0 10px; font: inherit; }
 .prose blockquote p:last-child { margin-bottom: 0; }
 
-/* ── 设计稿原值：代码块（底色换成语义令牌，见 tokens.css 的说明） ── */
-.prose pre {
-  margin: 0 0 26px;
+/* ── 代码块 ──
+   外壳（figure.code-block，由 rehype-polish 生成）负责表面和角落里的两个附件，
+   pre 只负责滚动。分开是因为 pre 上有 overflow-x: auto ——
+   语言标签和复制按钮放进 pre 里，长代码一横滚就跟着跑没了。
+   外边距不在这里定，走下面统一的 .prose figure。 */
+.prose .code-block {
+  position: relative;
   background: var(--code-bg);
-  color: var(--code-fg);
   border: 1px solid var(--code-border);
   border-radius: var(--rounded-lg);
-  padding: 20px 22px;
+}
+
+.prose .code-block pre {
+  margin: 0;
+  padding: 18px 20px;
+  /* shiki 把主题底色写成行内样式，行内赢过样式表，只能 !important 压掉 */
+  background: none !important;
+  border: 0;
+  border-radius: inherit;
   font: var(--code);
   font-size: 13px;
   line-height: 1.75;
   overflow-x: auto;
 }
-.prose pre code {
+/* 有语言标签的块，第一行要给标签让出位置 */
+.prose .code-block[data-lang] pre { padding-top: 34px; }
+
+.prose .code-block pre code {
   font: inherit;
   background: none;
   border: none;
   padding: 0;
   color: inherit;
 }
-/* Shiki 会往 pre 上写自己的 background，覆盖掉，保持设计的表面色 */
-.prose pre.astro-code { background: var(--code-bg) !important; }
+
+/* 语言名。等宽、小号、弱化 —— 设计图里它是角落的注脚，不是标题。 */
+.prose .code-block__lang {
+  position: absolute;
+  top: 11px;
+  left: 21px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--code-label);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 复制按钮：平时不出现，悬停或键盘聚焦时淡入 */
+.prose .code-block__copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--rounded-sm);
+  background: none;
+  color: var(--code-btn);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.prose .code-block:hover .code-block__copy,
+.prose .code-block__copy:focus-visible { opacity: 1; }
+.prose .code-block__copy:hover {
+  background: var(--code-btn-bg);
+  border-color: var(--code-border);
+  color: var(--body-strong);
+}
+.prose .code-block__copy:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* 两个图标叠在同一个网格格子里，切 visibility 而不是插拔 DOM：
+   按钮尺寸不会跳，也不会有图标闪现。 */
+.prose .code-block__copy svg {
+  grid-area: 1 / 1;
+  width: 15px;
+  height: 15px;
+}
+.prose .code-block__icon--done { visibility: hidden; color: var(--success); }
+.prose .code-block__copy.is-copied .code-block__icon--copy { visibility: hidden; }
+.prose .code-block__copy.is-copied .code-block__icon--done { visibility: visible; }
+
+/* 触屏没有悬停，按钮得常驻，否则永远点不到 */
+@media (hover: none) {
+  .prose .code-block__copy { opacity: 1; }
+}
+
+/* 深色模式。shiki 的双主题把深色值写成行内变量 --shiki-dark，
+   这里整体切过去；同样要 !important 才压得过它写在行内的亮色值。
+   兜底给 --code-fg：.line 这类没有着色的 span 取不到变量。 */
+:root[data-theme='dark'] .prose .code-block pre,
+:root[data-theme='dark'] .prose .code-block pre span {
+  color: var(--shiki-dark, var(--code-fg)) !important;
+}
 
 /* ── 推导：行内代码。走浅米卡片面 + 发丝线，和深色代码块区分开 ── */
 .prose :not(pre) > code {

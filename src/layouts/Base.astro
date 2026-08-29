@@ -92,5 +92,42 @@ const ogImage = avatarAsset
       <slot />
     </main>
     <Footer />
+
+    <!--
+      代码块的复制按钮。用事件委托挂在 document 上：代码块由 markdown 渲染，
+      每页几个不确定，逐个绑监听没必要，也省得管新增节点。
+      按钮的外观（对勾、淡入）全在 CSS 里，这里只负责写剪贴板和翻个类名。
+    -->
+    <script>
+      // clipboard 只在安全上下文里有（https 与 localhost）。
+      // 拿不到就把按钮摘掉 —— 点了没反应的按钮比没有按钮更糟。
+      if (!navigator.clipboard) {
+        document.querySelectorAll('.code-block__copy').forEach((b) => b.remove());
+      }
+
+      document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.code-block__copy');
+        if (!btn) return;
+
+        const pre = btn.closest('.code-block')?.querySelector('pre');
+        if (!pre) return;
+
+        try {
+          // textContent 而不是 innerText：后者的换行取决于渲染结果，
+          // shiki 的每行之间本来就有真实换行符，直接取更稳。
+          await navigator.clipboard.writeText(pre.textContent.replace(/\n+$/, ''));
+        } catch {
+          return; // 用户拒绝授权，保持原状，不要给出「已复制」的假信号
+        }
+
+        btn.classList.add('is-copied');
+        btn.setAttribute('aria-label', '已复制');
+        clearTimeout(btn._t);
+        btn._t = setTimeout(() => {
+          btn.classList.remove('is-copied');
+          btn.setAttribute('aria-label', '复制代码');
+        }, 1600);
+      });
+    </script>
   </body>
 </html>
