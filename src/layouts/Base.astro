@@ -83,6 +83,13 @@ const ogImage = avatarAsset
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     />
+
+    <!--
+      页面自己往 <head> 里塞东西的口子。目前只有别名跳转页用它放 meta refresh ——
+      没有这个具名 slot 的话，`slot="head"` 的内容会掉进下面那个匿名 slot 渲染到
+      <body> 里，浏览器不认，无 JS 环境就不会跳转（只剩一个手点的链接）。
+    -->
+    <slot name="head" />
   </head>
 
   <body>
