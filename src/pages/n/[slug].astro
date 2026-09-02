@@ -119,7 +119,9 @@ const { Content } = await render(entry);
 )}
 
 <style>
-  .note { max-width: var(--measure); padding: 40px 0 0; }
+  /* 760px 的 .container 里放 640px 的文章行宽，剩下的 80px 得自己分掉；
+     少了 auto 外边距，整篇正文就贴左边，相对页头/页脚左偏 40px */
+  .note { max-width: var(--measure); margin-inline: auto; padding: 40px 0 0; }
 
   .note__back {
     display: inline-flex;
