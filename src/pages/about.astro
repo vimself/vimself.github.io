@@ -51,6 +51,11 @@ import { avatarAsset, AVATAR_FALLBACK } from '../lib/avatar';
 </Base>
 
 <style>
+  /* 关于页整页就是一根 620px 的单列，而 .container 的内容盒有 720px。
+     四段都得自己居中，否则整页相对页头/页脚左偏 50px（同 n/[slug].astro 的 .note）。
+     .head 一起收进这根列，头像的左边缘才和正文对齐。 */
+  .head, .bio, .tl, .cta-wrap { max-width: 620px; margin-inline: auto; }
+
   .head { padding: 56px 0 0; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
   .avatar {
     width: 88px; height: 88px; border-radius: 50%;
@@ -59,14 +64,14 @@ import { avatarAsset, AVATAR_FALLBACK } from '../lib/avatar';
   .head__text { display: flex; flex-direction: column; gap: 6px; }
   .head__role { font: var(--body-sm); color: var(--muted); }
 
-  .bio { padding: 34px 0 0; max-width: 620px; }
+  .bio { padding: 34px 0 0; }
   .bio__p {
     font: var(--body-md); font-size: 17px; line-height: 1.95;
     color: var(--body); margin: 0 0 18px; text-wrap: pretty;
   }
   .bio__p:last-child { margin-bottom: 0; }
 
-  .tl { padding: 44px 0 0; max-width: 620px; }
+  .tl { padding: 44px 0 0; }
   .tl__list {
     margin-top: 18px;
     border-left: 1px solid var(--hairline);
@@ -83,7 +88,7 @@ import { avatarAsset, AVATAR_FALLBACK } from '../lib/avatar';
     color: var(--body); flex: 1 1 240px; min-width: 0; text-wrap: pretty;
   }
 
-  .cta-wrap { padding: 44px 0 0; max-width: 620px; }
+  .cta-wrap { padding: 44px 0 0; }
   .cta { flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; padding: 24px; }
   .cta:hover { box-shadow: none; }
   .cta__text { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; }
