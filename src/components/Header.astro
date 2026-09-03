@@ -3,9 +3,13 @@ import { Image } from 'astro:assets';
 import { site } from '../config/site';
 import { avatarAsset, AVATAR_FALLBACK } from '../lib/avatar';
 
-/** 当前高亮的导航项 */
-interface Props { current?: 'home' | 'search' | 'cats' | 'about' }
-const { current } = Astro.props;
+interface Props {
+  /** 当前高亮的导航项 */
+  current?: 'home' | 'search' | 'cats' | 'about';
+  /** 是否显示阅读进度条 —— 只有文章页要 */
+  progress?: boolean;
+}
+const { current, progress = false } = Astro.props;
 
 const items = [
   { key: 'home',   label: '首页', href: '/' },
@@ -15,6 +19,9 @@ const items = [
 ] as const;
 ---
 <header class="site-header">
+  {/* 设计稿把进度条贴在页头底边。是不是文章页在构建时就知道，
+      不必像画布那样渲出来再用变量切显隐 —— 别的页面根本不生成这个元素。 */}
+  {progress && <div class="read-progress" data-read-progress aria-hidden="true"></div>}
   <div class="site-header__inner">
     <a class="brand" href="/">
       {avatarAsset ? (
@@ -53,6 +60,28 @@ const items = [
 </header>
 
 <script>
+  /*
+   * 阅读进度条。只有文章页会渲染这个元素，其余页面这段直接短路。
+   *
+   * 不和目录那份滚动监听合并：目录只在有标题时才存在，进度条在任何文章页都要有，
+   * 合并反而多一层条件。两份各自只做几行算术，rAF 节流后代价可以忽略。
+   */
+  const bar = document.querySelector('[data-read-progress]');
+  if (bar) {
+    let raf = 0;
+    const paint = () => {
+      raf = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      // 一屏就到底的页面没有「进度」可言，画出来只会是一条乱跳的线
+      const pct = max > 12 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0;
+      bar.style.setProperty('--read-pct', pct.toFixed(1) + '%');
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    paint();
+  }
+
   const btn = document.getElementById('theme-toggle');
   btn?.addEventListener('click', () => {
     const now = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';

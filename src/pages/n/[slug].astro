@@ -2,6 +2,7 @@
 import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Badge from '../../components/Badge.astro';
+import Toc from '../../components/Toc.astro';
 import { allNotes, data, fmtDate } from '../../lib/notes';
 import { slugify } from '../../lib/slug.mjs';
 import { site } from '../../config/site';
@@ -42,7 +43,18 @@ export async function getStaticPaths() {
 const { entry, alias, prev, next } = Astro.props;
 const d = data(entry);
 const target = new URL(d.url, site.url).href;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+
+/*
+ * 目录只收 h2/h3 —— rehype-polish 也只给这两级生成 id，取更深的层级会拿到
+ * Astro 自己用 github-slugger 算的 id，和 [[笔记#小节]] 那套对不上。
+ * （全库目前 h4 用量为 0，不是损失。）
+ *
+ * headings[].slug 就是 rehype-polish 算的那个：用户 rehype 插件排在 Astro 的
+ * rehypeHeadingIds 之前，后者遇到已有 id 不覆盖。
+ */
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const hasToc = toc.length > 0;
 ---
 {alias ? (
   <Base title={alias} description={d.lede} canonical={target} noindex>
@@ -56,8 +68,8 @@ const { Content } = await render(entry);
     <script is:inline set:html={`location.replace(${JSON.stringify(d.url)})`} />
   </Base>
 ) : (
-  <Base title={d.name} description={d.lede} current="home">
-    <div class="container anim-view">
+  <Base title={d.name} description={d.lede} current="home" progress>
+    <div class:list={['container', 'anim-view', hasToc && 'note-shell']}>
       <article class="note">
         <a class="note__back" href="/">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
@@ -114,7 +126,13 @@ const { Content } = await render(entry);
           </section>
         )}
       </article>
+
+      {hasToc && <Toc headings={toc} variant="rail" />}
     </div>
+
+    {/* 抽屉和浮起按钮必须放在壳外面：壳上挂着 .anim-view，
+        入场那 320ms 里 transform 不是 none，会成为 position:fixed 后代的包含块。 */}
+    {hasToc && <Toc headings={toc} variant="sheet" />}
   </Base>
 )}
 
@@ -122,6 +140,25 @@ const { Content } = await render(entry);
   /* 760px 的 .container 里放 640px 的文章行宽，剩下的 80px 得自己分掉；
      少了 auto 外边距，整篇正文就贴左边，相对页头/页脚左偏 40px */
   .note { max-width: var(--measure); margin-inline: auto; padding: 40px 0 0; }
+
+  /* 有目录的宽屏：壳从 760 撑到 942，正文和目录作为一个整体居中。
+     942 - 40 内边距 = 902，正好容下 640 + 44 + 214 = 898。
+     页头页脚仍是 760px —— 设计稿里也只有文章壳变宽。 */
+  @media (min-width: 1000px) {
+    .note-shell {
+      max-width: 942px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 44px;
+    }
+    .note-shell .note {
+      flex: 1 1 var(--measure);
+      max-width: var(--measure);
+      min-width: 0;
+      margin-inline: 0;
+    }
+  }
 
   .note__back {
     display: inline-flex;

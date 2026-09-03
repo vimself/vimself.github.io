@@ -123,7 +123,14 @@ export default function rehypePolish() {
           ariaHidden: 'true',
           tabIndex: -1,
         },
-        children: [{ type: 'text', value: '#' }],
+        /*
+         * 不塞 text 子节点，`#` 由 prose.css 的 ::before 提供。
+         * Astro 的 rehypeHeadingIds 排在本插件之后（见 markdown-remark 的 index.js），
+         * 它收集标题文本时只跳过 element 节点本身、仍会下钻到子节点的 text ——
+         * 这里放一个 '#'，headings[].text 就会变成「#小节名」，目录里全是井号。
+         * 顺带修掉：选中标题复制时不再捎上一个 #。
+         */
+        children: [],
       });
     });
 

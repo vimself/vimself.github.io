@@ -46,8 +46,9 @@
   margin: 26px 0 10px;
 }
 
-/* 标题锚点：hover 时才浮出一个 #，不打扰阅读 */
-.prose h2, .prose h3 { position: relative; scroll-margin-top: 76px; }
+/* 标题锚点：hover 时才浮出一个 #，不打扰阅读。
+   scroll-margin-top 88px = 吸顶页头 60px + 一点呼吸，锚点和目录跳转共用这个落点。 */
+.prose h2, .prose h3 { position: relative; scroll-margin-top: 88px; }
 .prose .heading-anchor {
   position: absolute;
   left: -0.85em;
@@ -58,9 +59,25 @@
   text-decoration: none;
   transition: opacity 150ms ease;
 }
+.prose .heading-anchor::before { content: '#'; }
 .prose h2:hover .heading-anchor,
 .prose h3:hover .heading-anchor,
 .prose .heading-anchor:focus-visible { opacity: 1; }
+
+/* 从目录跳过来时在落点标题上闪一下。
+   88px 的偏移量在长文里并不显眼，不给落点提示，读者容易以为没跳。
+   设计稿用 Web Animations API 写死了一个 rgba，这里换成 color-mix 跟着主题走，
+   也就自动受 global.css 里那条 prefers-reduced-motion 约束。 */
+@keyframes tocFlash {
+  0%   { background-color: transparent; }
+  22%  { background-color: color-mix(in srgb, var(--primary) 16%, transparent); }
+  100% { background-color: transparent; }
+}
+.prose h2.is-target,
+.prose h3.is-target {
+  animation: tocFlash 1300ms cubic-bezier(.22, .68, .24, 1);
+  border-radius: var(--rounded-xs);
+}
 
 /* ── 设计稿原值：引用块 ── */
 .prose blockquote {

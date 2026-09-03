@@ -13,8 +13,10 @@ interface Props {
   /** 笔记页把 canonical 交给自己，别名跳转页需要指到正文 */
   canonical?: string;
   noindex?: boolean;
+  /** 文章页在页头底边挂一条阅读进度条 */
+  progress?: boolean;
 }
-const { title, description, current, canonical, noindex = false } = Astro.props;
+const { title, description, current, canonical, noindex = false, progress = false } = Astro.props;
 
 const pageTitle = title ? `${title} · ${site.title}` : `${site.title} · ${site.author}`;
 const desc = description || site.description;
@@ -94,7 +96,7 @@ const ogImage = avatarAsset
 
   <body>
     <a class="skip-link" href="#main">跳到正文</a>
-    <Header current={current} />
+    <Header current={current} progress={progress} />
     <main id="main">
       <slot />
     </main>

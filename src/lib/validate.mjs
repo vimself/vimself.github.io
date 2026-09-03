@@ -68,6 +68,19 @@ export function validateNote(note) {
     issues.push({ level: 'warn', at, msg: '正文里出现了 H1。文件名即标题，正文从 H2 开始' });
   }
 
+  // ── warn：标题只到三级（CLAUDE.md 写作第 2 条）──
+  // rehype-polish 只给 H2/H3 生成锚点。H4 及更深是**静默**失效的：
+  // 既进不了文章目录，[[笔记#小节]] 也跳不过去，而页面看上去一切正常。
+  // 正因为没有任何可见症状，才值得在构建期喊一声。复用上面剥过围栏的正文。
+  const tooDeep = withoutFences.match(/^#{4,}\s+\S/gm);
+  if (tooDeep) {
+    issues.push({
+      level: 'warn',
+      at,
+      msg: `出现了 ${tooDeep.length} 处 H4 及更深的标题。正文只用 ## 与 ###：更深的层级不生成锚点，进不了文章目录，[[笔记#小节]] 也跳不过去`,
+    });
+  }
+
   // ── warn：日期 ──
   if (!note.created) issues.push({ level: 'warn', at, msg: 'created 缺失或格式非法' });
   if (!note.updated) issues.push({ level: 'warn', at, msg: 'updated 缺失或格式非法' });

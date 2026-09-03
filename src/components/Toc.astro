@@ -1,0 +1,467 @@
+---
+/**
+ * 文章目录。
+ *
+ * 逐值移植自设计稿 `Vimself Blog.dc.html` 的目录部分，两种形态：
+ *   - variant="rail"  ≥1000px，正文右侧 214px 常驻贴边栏，左边一条珊瑚游标跟着滚动滑
+ *   - variant="sheet" <1000px，右下角浮起药丸按钮 + 遮罩 + 底部抽屉
+ *
+ * 设计稿本身就把列表渲染了两遍（aside 一份、抽屉一份），这里不强行合并 DOM ——
+ * 两种形态的行高、字号、前导记号都不一样，合并只会换来一堆媒体查询覆盖。
+ * 两份都用 data-toc-link 标记行，脚本按 slug 一起改状态。
+ *
+ * 放置有讲究：rail 进文章壳当 flex 第二列，sheet 必须放在壳**外面**。
+ * 壳上挂着 .anim-view，入场那 320ms 里 transform 不是 none，
+ * 会成为 position:fixed 后代的包含块 —— 抽屉和按钮会跟着偏移。
+ */
+export interface TocHeading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: TocHeading[];
+  variant: 'rail' | 'sheet';
+}
+
+const { headings, variant } = Astro.props;
+const count = `${headings.length} 节`;
+---
+
+{variant === 'rail' ? (
+  <aside class="toc" data-toc>
+    <div class="toc__head">
+      <span class="eyebrow">目录</span>
+      <span class="toc__count">{count}</span>
+    </div>
+    <nav class="toc__list" data-toc-list aria-label="文章目录">
+      <span class="toc__marker" aria-hidden="true"></span>
+      {headings.map((h) => (
+        <a
+          class:list={['toc__item', h.depth >= 3 && 'toc__item--sub']}
+          href={`#${h.slug}`}
+          data-toc-link={h.slug}
+        >
+          <span class="toc__label">{h.text}</span>
+        </a>
+      ))}
+    </nav>
+  </aside>
+) : (
+  <div class="toc-sheet" data-toc-sheet>
+    <button
+      type="button"
+      class="toc-fab"
+      data-toc-open
+      aria-controls="toc-drawer"
+      aria-expanded="false"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11"></path><path d="M4 12h16"></path><path d="M4 18h8"></path></svg>
+      目录
+    </button>
+
+    <div class="toc-scrim" data-toc-close aria-hidden="true"></div>
+
+    <div
+      class="toc-drawer"
+      id="toc-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="文章目录"
+      aria-hidden="true"
+      inert
+    >
+      <div class="toc-drawer__grab" aria-hidden="true"><span></span></div>
+      <div class="toc-drawer__head">
+        <span class="toc-drawer__title">目录</span>
+        <span class="toc__count">{count}</span>
+        <button type="button" class="toc-drawer__close" data-toc-close aria-label="关闭目录">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+      </div>
+      <nav class="toc-drawer__list" aria-label="文章目录">
+        {headings.map((h) => (
+          <a
+            class:list={['toc-drawer__item', h.depth >= 3 && 'toc-drawer__item--sub']}
+            href={`#${h.slug}`}
+            data-toc-link={h.slug}
+          >
+            {h.depth < 3 && <span class="toc-drawer__dot" aria-hidden="true"></span>}
+            <span class="toc__label">{h.text}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
+  </div>
+)}
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     宽屏：正文右侧的常驻贴边栏
+     ───────────────────────────────────────────────────────────── */
+
+  .toc {
+    flex: 0 0 214px;
+    width: 214px;
+    position: sticky;
+    top: 78px;
+    padding: 52px 0 40px;
+    /* backwards 而不是 both：both 会把动画终值永久钉在元素上，
+       之后任何规则都改不动 opacity 了。backwards 只在延迟期间生效，跑完就交还给层叠。 */
+    animation: fadeIn 420ms ease 140ms backwards;
+
+    /* 设计稿没有给长目录兜底：Servlet 有 31 个标题，一屏放不下，
+       而 sticky 元素比视口高时，超出的部分永远滚不到。
+       所以让目录自己成为滚动容器 —— 页面滚动不再被它吃掉（overscroll-behavior）。 */
+    max-height: calc(100vh - 118px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /*
+   * 滚动条整条藏掉。
+   *
+   * macOS 的叠加式滚动条占 0 布局宽度，会直接画在条目文字上；要么给它留一条槽
+   * （文字列就得让出十几个像素），要么不显示。这里选后者：当前小节本来就会
+   * 被脚本自动带回可见区，读者极少需要手动拖，而滚轮/触控板/键盘照常能滚。
+   * 两个属性缺一不可：scrollbar-width 是标准属性，::-webkit-scrollbar 管 Chrome/Safari。
+   */
+  .toc, .toc-drawer { scrollbar-width: none; }
+  .toc::-webkit-scrollbar,
+  .toc-drawer::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 999px) {
+    .toc { display: none; }
+  }
+
+  .toc__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 4px 12px 15px;
+  }
+
+  .toc__count {
+    font: var(--code);
+    font-size: 11px;
+    color: var(--muted-soft);
+    margin-left: auto;
+  }
+
+  .toc__list {
+    position: relative;
+    border-left: 1px solid var(--hairline);
+  }
+
+  /* 当前小节的游标。位置和高度由脚本写进这三个变量，
+     transition 让它在条目之间滑过去，而不是闪现。 */
+  .toc__marker {
+    position: absolute;
+    left: -1.5px;
+    top: 0;
+    width: 2px;
+    height: var(--toc-mark-h, 22px);
+    background: var(--primary);
+    border-radius: 2px;
+    opacity: var(--toc-mark-o, 0);
+    transform: translateY(var(--toc-mark-y, 0px));
+    transition: transform 380ms cubic-bezier(.22, .68, .24, 1), height 260ms ease, opacity 260ms ease;
+  }
+
+  .toc__item {
+    display: block;
+    padding: 8px 8px 8px 15px;
+    font: var(--body-sm);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 0 8px 8px 0;
+    transition: color 200ms ease, background-color 160ms ease;
+    text-wrap: pretty;
+  }
+  .toc__item:hover { color: var(--ink); background: var(--surface-soft); }
+  .toc__item[aria-current] { color: var(--ink); }
+
+  /* 子级只用缩进表示层级，不加前导记号。
+     32px = 原来「15px 内边距 + 9px 短横 + 8px 间距」的落字位置，
+     所以去掉短横之后文字一个像素都没动。 */
+  .toc__item--sub {
+    padding: 7px 8px 7px 32px;
+    font-size: 12.5px;
+    color: var(--muted-soft);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     窄屏：浮起按钮 + 遮罩 + 底部抽屉
+     ───────────────────────────────────────────────────────────── */
+
+  @media (min-width: 1000px) {
+    .toc-sheet { display: none; }
+  }
+
+  .toc-fab {
+    position: fixed;
+    right: 16px;
+    /* 刘海屏底部的手势条区域不能压 */
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    z-index: 55;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 17px;
+    border-radius: 23px;
+    border: 1px solid var(--hairline);
+    background: var(--canvas);
+    color: var(--ink);
+    box-shadow: var(--shadow-fab);
+    font: var(--button);
+    font-family: var(--font-sans);
+    cursor: pointer;
+    /* 必须是 backwards，不能是 both。both 会让 riseIn 的终值
+       （opacity:1、transform:none）永久压在元素上，下面 .is-open 的淡出
+       和 :active 的按压反馈就全都写不进去了。 */
+    animation: riseIn 420ms cubic-bezier(.22, .68, .24, 1) 180ms backwards;
+    transition: opacity 220ms ease, transform 300ms cubic-bezier(.22, .68, .24, 1);
+  }
+  .toc-fab:active { transform: scale(.96); }
+  /* 抽屉展开时按钮让位，否则和抽屉顶边叠在一起 */
+  .toc-sheet.is-open .toc-fab {
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+  }
+
+  .toc-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 56;
+    background: var(--scrim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 260ms ease;
+  }
+  .toc-sheet.is-open .toc-scrim { opacity: 1; pointer-events: auto; }
+
+  .toc-drawer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 57;
+    max-height: 70vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--canvas);
+    border-top: 1px solid var(--hairline);
+    border-radius: 20px 20px 0 0;
+    padding: 8px 16px calc(22px + env(safe-area-inset-bottom));
+    box-shadow: var(--shadow-sheet);
+    /* 104% 而不是 100%：多推出去一点，阴影才不会在收起时还挂在屏幕底边 */
+    transform: translateY(104%);
+    transition: transform 400ms cubic-bezier(.22, .9, .26, 1);
+  }
+  .toc-sheet.is-open .toc-drawer { transform: translateY(0); }
+
+  .toc-drawer__grab { display: flex; justify-content: center; padding: 4px 0 10px; }
+  .toc-drawer__grab span {
+    width: 38px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--hairline);
+  }
+
+  .toc-drawer__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 2px 6px;
+  }
+  .toc-drawer__title {
+    font-family: var(--font-serif-display);
+    font-size: 19px;
+    letter-spacing: -0.3px;
+    color: var(--ink);
+  }
+  .toc-drawer__close {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .toc-drawer__close:active { background: var(--surface-soft); }
+
+  .toc-drawer__list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--hairline-soft);
+  }
+
+  .toc-drawer__item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    /* 48px 是触摸目标的下限，比视觉需要的高 —— 抽屉是用手指点的 */
+    min-height: 48px;
+    padding: 11px 6px;
+    border-bottom: 1px solid var(--hairline-soft);
+    font: var(--title-sm);
+    font-size: 15px;
+    color: var(--muted);
+    text-decoration: none;
+    text-wrap: pretty;
+  }
+  .toc-drawer__item:active { background: var(--surface-soft); }
+  .toc-drawer__item[aria-current] { color: var(--ink); }
+
+  /* 48px = 原来「25px 内边距 + 12px 短横 + 11px 间距」的落字位置，
+     去掉短横之后文字没有位移，层级仍由缩进 + 字号 + 颜色三重表达。 */
+  .toc-drawer__item--sub {
+    min-height: 46px;
+    padding: 10px 6px 10px 48px;
+    font: var(--body-sm);
+    font-size: 14px;
+    color: var(--muted-soft);
+  }
+
+  .toc-drawer__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex: 0 0 auto;
+    opacity: .8;
+  }
+  .toc__label { min-width: 0; }
+</style>
+
+<script>
+  /*
+   * 目录的全部行为。两种形态共用一份：条目按 data-toc-link 配对，
+   * 高亮状态同时打在侧栏和抽屉上，不管当前显示的是哪一个。
+   */
+  const rail = document.querySelector('[data-toc]');
+  const list = document.querySelector('[data-toc-list]');
+  const sheet = document.querySelector('[data-toc-sheet]');
+
+  if (rail && list) {
+    const links = Array.from(document.querySelectorAll('[data-toc-link]'));
+
+    // slug → 正文里的标题元素。按侧栏里的出现顺序去重，就是文档顺序。
+    const seen = new Set();
+    const sections = [];
+    for (const a of links) {
+      const slug = a.getAttribute('data-toc-link');
+      if (!slug || seen.has(slug)) continue;
+      seen.add(slug);
+      const el = document.getElementById(slug);
+      if (el) sections.push({ slug, el });
+    }
+
+    // ── 滚动高亮 ──
+    let current = '';
+
+    function paint() {
+      if (!sections.length) return;
+
+      // 取最后一个已经越过 132px 线的标题：这条线大致在吸顶页头下方一点，
+      // 落在它上面的那节才是「正在读的」。
+      let active = sections[0].slug;
+      for (const s of sections) {
+        if (s.el.getBoundingClientRect().top <= 132) active = s.slug;
+      }
+      if (active === current) return;
+      current = active;
+
+      for (const a of links) {
+        if (a.getAttribute('data-toc-link') === active) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+      }
+
+      const row = list.querySelector('[data-toc-link="' + CSS.escape(active) + '"]');
+      if (!row) return;
+      list.style.setProperty('--toc-mark-y', row.offsetTop + 'px');
+      list.style.setProperty('--toc-mark-h', row.offsetHeight + 'px');
+      list.style.setProperty('--toc-mark-o', '1');
+
+      /*
+       * 长目录（Servlet 有 31 项）里当前项可能已经滚出侧栏可见区。
+       * 手工算 scrollTop 而不是用 scrollIntoView({block:'nearest'}) ——
+       * 后者会顺带把整个页面也滚一下，读者正在读的位置就被抢走了。
+       * row.offsetTop 相对 list，list 相对 rail（rail 是 sticky，即定位元素），所以要加上 list.offsetTop。
+       */
+      const top = list.offsetTop + row.offsetTop;
+      const bottom = top + row.offsetHeight;
+      if (top < rail.scrollTop) rail.scrollTop = top - 12;
+      else if (bottom > rail.scrollTop + rail.clientHeight) {
+        rail.scrollTop = bottom - rail.clientHeight + 12;
+      }
+    }
+
+    let raf = 0;
+    function schedule() {
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); });
+    }
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', () => {
+      current = ''; // 尺寸变了，行的 offset 全变，必须重算而不是走同值短路
+      schedule();
+    });
+    paint();
+
+    // ── 抽屉开关 ──
+    const fab = sheet && sheet.querySelector('[data-toc-open]');
+    const drawer = sheet && sheet.querySelector('.toc-drawer');
+    let open = false;
+
+    function setOpen(next) {
+      if (!sheet || !fab || !drawer || open === next) return;
+      open = next;
+      sheet.classList.toggle('is-open', next);
+      fab.setAttribute('aria-expanded', String(next));
+      drawer.setAttribute('aria-hidden', String(!next));
+      drawer.toggleAttribute('inert', !next);
+      // 抽屉自己能滚，底下的正文不该跟着动
+      document.body.style.overflow = next ? 'hidden' : '';
+      // 焦点跟着走：打开时进抽屉，关闭时回到按钮，不然键盘用户会掉到页面开头
+      const back = next ? drawer.querySelector('[data-toc-close]') : fab;
+      if (back) back.focus();
+    }
+    function close() { setOpen(false); }
+
+    if (sheet && fab) {
+      fab.addEventListener('click', () => setOpen(true));
+      for (const el of sheet.querySelectorAll('[data-toc-close]')) {
+        el.addEventListener('click', close);
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') close();
+      });
+      // 转到宽屏时抽屉容器整个 display:none 了，状态得跟着复位，否则 body 一直锁着
+      window.matchMedia('(min-width: 1000px)').addEventListener('change', close);
+    }
+
+    // ── 点条目：不拦默认行为，让浏览器走原生 hash 跳转 + 平滑滚动 ──
+    for (const a of links) {
+      a.addEventListener('click', () => {
+        close();
+        const slug = a.getAttribute('data-toc-link');
+        const el = slug && document.getElementById(slug);
+        if (!el) return;
+        // 88px 的偏移量在长文里不显眼，给落点闪一下，告诉读者跳到哪了
+        el.classList.remove('is-target');
+        void el.offsetWidth; // 强制回流，动画才会从头再放一遍
+        el.classList.add('is-target');
+        el.addEventListener('animationend', () => el.classList.remove('is-target'), { once: true });
+      });
+    }
+  }
+</script>
