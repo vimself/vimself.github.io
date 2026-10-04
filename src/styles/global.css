@@ -237,6 +237,7 @@ main { flex: 1; }
   padding: 24px 20px 34px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
 }
@@ -245,10 +246,8 @@ main { flex: 1; }
   font: var(--code);
   font-size: 11.5px;
   color: var(--muted-soft);
-  margin-left: auto;
 }
 .site-footer__uptime {
-  flex-basis: 100%;
   font: var(--caption);
   color: var(--muted-soft);
 }
