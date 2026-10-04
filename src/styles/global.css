@@ -240,14 +240,7 @@ main { flex: 1; }
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
-}
-.site-footer__copy { font: var(--caption); color: var(--muted-soft); }
-.site-footer__built {
-  font: var(--code);
-  font-size: 11.5px;
-  color: var(--muted-soft);
-}
-.site-footer__uptime {
+  /* 三项统一字体，避免版权 / 运行时长 / 托管说明各成一派 */
   font: var(--caption);
   color: var(--muted-soft);
 }
