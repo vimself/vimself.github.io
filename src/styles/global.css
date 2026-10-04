@@ -240,11 +240,12 @@ main { flex: 1; }
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
-  /* 三项统一字体，避免版权 / 运行时长 / 托管说明各成一派 */
-  font: var(--caption);
+  /* 三项统一用细小的等宽字，与列表日期同一气质；
+     等宽字体栈不含中文字形，接上正文黑体，免得「本站已运行」回落到系统宋体 */
+  font: 400 11.5px/1.4 'JetBrains Mono', 'SFMono-Regular', Consolas, var(--font-sans);
   color: var(--muted-soft);
 }
-.site-footer__uptime-value { font-variant-numeric: tabular-nums; }
+.site-footer__num { margin: 0 3px; }
 
 /* ─────────────────────────────────────────────────────────────
    笔记列表行 — 首页 / 领域页 / 搜索页共用

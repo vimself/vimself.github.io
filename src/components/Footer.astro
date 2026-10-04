@@ -6,7 +6,7 @@ const year = new Date().getFullYear();
   <div class="site-footer__inner">
     <span class="site-footer__copy">© {year} {site.title} · {site.author}</span>
     <span class="site-footer__uptime" data-since={site.launchedAt}>
-      本站已运行 <span class="site-footer__uptime-value">—</span>
+      本站已运行<span class="site-footer__uptime-value">—</span>
     </span>
     <span class="site-footer__built">Built &amp; hosted on GitHub Pages</span>
   </div>
@@ -20,7 +20,9 @@ const year = new Date().getFullYear();
   if (out && !Number.isNaN(since)) {
     const tick = () => {
       const h = Math.max(0, Math.floor((Date.now() - since) / 3_600_000));
-      out.textContent = `${Math.floor(h / 24)} 天 ${h % 24} 小时`;
+      // 等宽字体里空格占满一格，数字与中文之间改用 CSS 细间距
+      const num = (n: number) => `<span class="site-footer__num">${n}</span>`;
+      out.innerHTML = `${num(Math.floor(h / 24))}天${num(h % 24)}小时`;
     };
     tick();
     setInterval(tick, 60_000);
