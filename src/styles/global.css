@@ -247,6 +247,12 @@ main { flex: 1; }
   color: var(--muted-soft);
   margin-left: auto;
 }
+.site-footer__uptime {
+  flex-basis: 100%;
+  font: var(--caption);
+  color: var(--muted-soft);
+}
+.site-footer__uptime-value { font-variant-numeric: tabular-nums; }
 
 /* ─────────────────────────────────────────────────────────────
    笔记列表行 — 首页 / 领域页 / 搜索页共用

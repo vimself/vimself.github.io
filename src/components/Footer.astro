@@ -6,5 +6,27 @@ const year = new Date().getFullYear();
   <div class="site-footer__inner">
     <span class="site-footer__copy">© {year} {site.title} · {site.author}</span>
     <span class="site-footer__built">Built &amp; hosted on GitHub Pages</span>
+    <span class="site-footer__uptime" data-since={site.launchedAt}>
+      本站已运行 <span class="site-footer__uptime-value">—</span>
+    </span>
   </div>
 </footer>
+
+<script>
+  const el = document.querySelector<HTMLElement>('.site-footer__uptime');
+  const out = el?.querySelector<HTMLElement>('.site-footer__uptime-value');
+  const since = Date.parse(el?.dataset.since ?? '');
+
+  if (out && !Number.isNaN(since)) {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const tick = () => {
+      const s = Math.max(0, Math.floor((Date.now() - since) / 1000));
+      const d = Math.floor(s / 86400);
+      const h = Math.floor((s % 86400) / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      out.textContent = `${d} 天 ${pad(h)} 时 ${pad(m)} 分 ${pad(s % 60)} 秒`;
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+</script>

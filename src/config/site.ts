@@ -31,6 +31,9 @@ export const site = {
   github: 'https://github.com/vimself',
   notesRepo: 'https://github.com/vimself/jory-notes',
 
+  /** 页脚「已运行」计时的起点 —— vimself.github.io 仓库的创建时间（GitHub API created_at） */
+  launchedAt: '2026-08-27T18:32:56Z',
+
   /** 每页笔记数 —— 对应设计稿的 perPage prop（默认 10，范围 5–50） */
   perPage: 10,
 
